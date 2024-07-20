@@ -1,146 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:restaurant_app/data/model/restaurant_data.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_app/data/api/api_service.dart';
+import 'package:restaurant_app/data/api/result_state.dart';
+import 'package:restaurant_app/provider/detail_restaurant_provider.dart';
+import 'package:restaurant_app/widget/content_detail_restaurant.dart';
 import 'package:restaurant_app/widget/custom_appbar.dart';
+import 'package:restaurant_app/widget/error_message.dart';
 
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   static const routeName = "/detail_screen";
-  final Restaurant restaurant;
 
-  const DetailScreen({super.key, required this.restaurant});
+  const DetailScreen({super.key});
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  Future<void> _refreshData(BuildContext context) async {
+    final String restaurantId =
+        ModalRoute.of(context)?.settings.arguments as String;
+    await Provider.of<DetailRestaurantProvider>(context, listen: false)
+        .fetchDetailRestaurant(restaurantId);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CustomAppbar(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
-              ),
-              child: Image.network("${restaurant.pictureId}"),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text("${restaurant.name}",
-                      style: Theme.of(context).textTheme.headlineMedium),
-                  Row(
-                    children: <Widget>[
-                      const Icon(
-                        Icons.place,
-                        color: Colors.red,
-                        size: 24,
-                      ),
-                      Text(
-                        "${restaurant.city}",
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Deskripsi :",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "${restaurant.description}",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Our Menu :",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Foods",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 180,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: restaurant.menus!.foods!.map((foods) {
-                        return Card(
-                          color: Colors.white,
-                          elevation: 2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              children: <Widget>[
-                                Image.asset(
-                                  "assets/images/food.png",
-                                  width: 100,
-                                  height: 100,
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  "${foods.name}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                                Text(
-                                  "Rp 25.000",
-                                  style: Theme.of(context).textTheme.labelLarge,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Drinks",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 180,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: restaurant.menus!.drinks!.map((drinks) {
-                        return Card(
-                          color: Colors.white,
-                          elevation: 2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              children: <Widget>[
-                                Image.asset(
-                                  "assets/images/drink.png",
-                                  width: 100,
-                                  height: 100,
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  "${drinks.name}",
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                                Text(
-                                  "Rp 20.000",
-                                  style: Theme.of(context).textTheme.labelLarge,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
+    final String restaurantId =
+        ModalRoute.of(context)?.settings.arguments as String;
+
+    return ChangeNotifierProvider<DetailRestaurantProvider>(
+      create: (_) =>
+          DetailRestaurantProvider(apiService: ApiService(), id: restaurantId),
+      child: CustomAppbar(
+        body: _buildDetailRestaurant(),
       ),
     );
+  }
+
+  Widget _buildDetailRestaurant() {
+    return Consumer<DetailRestaurantProvider>(builder: (context, state, _) {
+      if (state.state == ResultState.loading) {
+        return RefreshIndicator(
+          onRefresh: () => _refreshData(context),
+          child: Center(
+            child: CircularProgressIndicator(color: Colors.green[800]),
+          ),
+        );
+      } else if (state.state == ResultState.hasData) {
+        return RefreshIndicator(
+          onRefresh: () => _refreshData(context),
+          child: ListView(
+            children: [
+              ContentDetailRestaurant(detailRestaurant: state.result.restaurant)
+            ],
+          ),
+        );
+      } else if (state.state == ResultState.noData) {
+        return RefreshIndicator(
+          onRefresh: () => _refreshData(context),
+          child: ListView(
+            children: const [
+              Center(
+                child: ErrorMessage(
+                  image: "assets/images/no_data.png",
+                  message: "Data is empty, please refresh again",
+                ),
+              ),
+            ],
+          ),
+        );
+      } else if (state.state == ResultState.error) {
+        return RefreshIndicator(
+          onRefresh: () => _refreshData(context),
+          child: ListView(
+            children: const [
+              Center(
+                child: ErrorMessage(
+                  image: "assets/images/no_internet.png",
+                  message:
+                      "Check your internet connection and refresh this page",
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        return const Center(
+          child: Text(""),
+        );
+      }
+    });
   }
 }
