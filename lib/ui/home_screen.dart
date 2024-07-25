@@ -4,9 +4,12 @@ import 'package:restaurant_app/common/styles.dart';
 import 'package:restaurant_app/data/api/api_service.dart';
 import 'package:restaurant_app/data/api/result_state.dart';
 import 'package:restaurant_app/provider/list_restaurant_provider.dart';
+import 'package:restaurant_app/ui/favorite_screen.dart';
 import 'package:restaurant_app/ui/search_screen.dart';
+import 'package:restaurant_app/ui/setting_screen.dart';
 import 'package:restaurant_app/widget/card_list_restaurant.dart';
 import 'package:restaurant_app/widget/error_message.dart';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
   static const routeName = "/home_screen";
@@ -27,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<ListRestaurantProvider>(
       create: (_) => ListRestaurantProvider(
-        apiService: ApiService(),
+        apiService: ApiService(http.Client()),
       ),
       child: Scaffold(
         backgroundColor: primaryColor,
@@ -45,12 +48,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       "Restaurant",
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, SearchScreen.routeName);
-                      },
-                      icon: const Icon(Icons.search),
-                    )
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                                context, SearchScreen.routeName);
+                          },
+                          icon: const Icon(Icons.search),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                                context, FavoriteScreen.routeName);
+                          },
+                          icon: const Icon(Icons.favorite_border),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                                context, SettingScreen.routeName);
+                          },
+                          icon: const Icon(Icons.settings),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -101,13 +123,14 @@ class _HomeScreenState extends State<HomeScreen> {
           return RefreshIndicator(
             onRefresh: () => _refreshData(context),
             child: ListView(
-              children: const [
-                Center(
-                  child: ErrorMessage(
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.width,
+                  child: const ErrorMessage(
                     image: "assets/images/no_data.png",
                     message: "Data is empty, please refresh again",
                   ),
-                ),
+                )
               ],
             ),
           );
@@ -115,9 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
           return RefreshIndicator(
             onRefresh: () => _refreshData(context),
             child: ListView(
-              children: const [
-                Center(
-                  child: ErrorMessage(
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.width,
+                  child: const ErrorMessage(
                     image: "assets/images/no_internet.png",
                     message:
                         "Check your internet connection and refresh this page",

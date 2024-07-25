@@ -8,6 +8,7 @@ import 'package:restaurant_app/widget/card_list_restaurant.dart';
 import 'package:restaurant_app/widget/error_message.dart';
 import 'package:restaurant_app/widget/search_restaurant_converter.dart';
 import 'package:restaurant_app/widget/search_text_field.dart';
+import 'package:http/http.dart' as http;
 
 class SearchScreen extends StatelessWidget {
   static const routeName = "/search_screen";
@@ -17,7 +18,8 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<SearchRestaurantProvider>(
-      create: (_) => SearchRestaurantProvider(apiService: ApiService()),
+      create: (_) =>
+          SearchRestaurantProvider(apiService: ApiService(http.Client())),
       builder: (context, _) {
         return Scaffold(
           backgroundColor: primaryColor,

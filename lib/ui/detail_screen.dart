@@ -6,6 +6,7 @@ import 'package:restaurant_app/provider/detail_restaurant_provider.dart';
 import 'package:restaurant_app/widget/content_detail_restaurant.dart';
 import 'package:restaurant_app/widget/custom_appbar.dart';
 import 'package:restaurant_app/widget/error_message.dart';
+import 'package:http/http.dart' as http;
 
 class DetailScreen extends StatefulWidget {
   static const routeName = "/detail_screen";
@@ -30,8 +31,8 @@ class _DetailScreenState extends State<DetailScreen> {
         ModalRoute.of(context)?.settings.arguments as String;
 
     return ChangeNotifierProvider<DetailRestaurantProvider>(
-      create: (_) =>
-          DetailRestaurantProvider(apiService: ApiService(), id: restaurantId),
+      create: (_) => DetailRestaurantProvider(
+          apiService: ApiService(http.Client()), id: restaurantId),
       child: CustomAppbar(
         body: _buildDetailRestaurant(),
       ),
@@ -60,13 +61,14 @@ class _DetailScreenState extends State<DetailScreen> {
         return RefreshIndicator(
           onRefresh: () => _refreshData(context),
           child: ListView(
-            children: const [
-              Center(
-                child: ErrorMessage(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.width,
+                child: const ErrorMessage(
                   image: "assets/images/no_data.png",
                   message: "Data is empty, please refresh again",
                 ),
-              ),
+              )
             ],
           ),
         );
@@ -74,14 +76,15 @@ class _DetailScreenState extends State<DetailScreen> {
         return RefreshIndicator(
           onRefresh: () => _refreshData(context),
           child: ListView(
-            children: const [
-              Center(
-                child: ErrorMessage(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.width,
+                child: const ErrorMessage(
                   image: "assets/images/no_internet.png",
                   message:
                       "Check your internet connection and refresh this page",
                 ),
-              ),
+              )
             ],
           ),
         );
